@@ -1,13 +1,8 @@
-
-import os,sys
+import os
 from torchvision import transforms
-import torch, torch.utils
+import torch
 import numpy as np
-from torch.utils.data import DataLoader
-from torch.utils.data import Dataset
-import random
-import bisect
-import torchvision
+from torch.utils.data import DataLoader, Dataset
 import PIL
 
 def cut_data(data, out_length):
@@ -19,23 +14,21 @@ def cut_data(data, out_length):
         else:
             offset = out_length - data.shape[0]
             data = np.pad(data, ((0,offset),(0,0)), "constant")
-    if data.shape[0] < 200:
-        offset = 200 - data.shape[0]
+    if data.shape[0] < out_length:
+        offset = out_length - data.shape[0]
         data = np.pad(data, ((0,offset),(0,0)), "constant")
     return data
 
 def cut_data_front(data, out_length):
     if out_length is not None:
         if data.shape[0] > out_length:
-            max_offset = data.shape[0] - out_length
-            offset = 0
-            data = data[offset:(out_length+offset),:]
+            data = data[:out_length, :]
         else:
             offset = out_length - data.shape[0]
-            data = np.pad(data, ((0,offset),(0,0)), "constant")
-    if data.shape[0] < 200:
-        offset = 200 - data.shape[0]
-        data = np.pad(data, ((0,offset),(0,0)), "constant")
+            data = np.pad(data, ((0, offset), (0, 0)), "constant")
+    if data.shape[0] < out_length:
+        offset = out_length - data.shape[0]
+        data = np.pad(data, ((0, offset), (0, 0)), "constant")
     return data
 
 def shorter(feature, mean_size=2):
@@ -70,54 +63,48 @@ class CQT(Dataset):
             filepath='data/SHS100K-TRAIN_6'
         elif mode == 'val':
             filepath='data/SHS100K-VAL'
-        # elif mode == 'songs350': 
-        #     self.indir = 'data/you350_cqt_npy/'
-        #     filepath='data/you350_list.txt'
         elif mode == 'test': 
             filepath='data/SHS100K-TEST'
         elif mode == 'songs80': 
             self.indir = 'data/covers80_cqt_npy/'
             filepath = 'data/songs80_list.txt'
-        # elif mode == 'Mazurkas':
-        #     self.indir = 'data/Mazurkas_cqt_npy/'
-        #     filepath = 'data/Mazurkas_list.txt'
         with open(filepath, 'r') as fp:
             self.file_list = [line.rstrip() for line in fp]
         self.out_length = out_length
+    
     def __getitem__(self, index):
         transform_train = transforms.Compose([
-            lambda x: SpecAugment(x), #SpecAugment 频谱增强一次
-            lambda x: SpecAugment(x), #SpecAugment 频谱增强 x 2
+            lambda x: SpecAugment(x), # SpecAugment augmentation once
+            lambda x: SpecAugment(x), # SpecAugment augmentation x 2
             lambda x : x.T,
-            lambda x : change_speed(x, 0.7, 1.3), # 速度随机变化
-            lambda x : x.astype(np.float32) / (np.max(np.abs(x))+ 1e-6),
+            lambda x : change_speed(x, 0.7, 1.3), # Random speed change
+            lambda x : x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
             lambda x : cut_data(x, self.out_length),
             lambda x : torch.Tensor(x),
-            lambda x : x.permute(1,0).unsqueeze(0),
+            lambda x : x.permute(1, 0).unsqueeze(0),
         ])
         transform_test = transforms.Compose([
             lambda x : x.T,
-            #lambda x : x-np.mean(x),
-            lambda x : x.astype(np.float32) / (np.max(np.abs(x))+ 1e-6),
+            lambda x : x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
             lambda x : cut_data_front(x, self.out_length),
             lambda x : torch.Tensor(x),
-            lambda x : x.permute(1,0).unsqueeze(0),
+            lambda x : x.permute(1, 0).unsqueeze(0),
         ])
         filename = self.file_list[index].strip()
         set_id, version_id = filename.split('.')[0].split('_')
         set_id, version_id = int(set_id), int(version_id)
-        in_path = self.indir+filename+'.npy'
+        in_path = self.indir + filename + '.npy'
         data = np.load(in_path) # from 12xN to Nx12
 
-        if self.mode is 'train':
+        if self.mode == 'train':
             data = transform_train(data)
         else:
             data = transform_test(data)
         return data, int(set_id)
+    
     def __len__(self):
         return len(self.file_list)
 
-    
-if __name__=='__main__':
-    train_dataset = HPCP('train', 394)
-    trainloader = torch.utils.data.DataLoader(train_dataset, batch_size=128, num_workers=12, shuffle=True)
+if __name__ == '__main__':
+    train_dataset = CQT('train', 394)
+    trainloader = DataLoader(train_dataset, batch_size=128, num_workers=12, shuffle=True)
