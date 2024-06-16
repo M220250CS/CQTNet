@@ -1,8 +1,11 @@
-import os
+import os, sys
 from torchvision import transforms
 import torch
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
+import random
+import bisect
+import torchvision
 import PIL
 
 def cut_data(data, out_length):
@@ -14,16 +17,31 @@ def cut_data(data, out_length):
         else:
             offset = out_length - data.shape[0]
             data = np.pad(data, ((0, offset), (0, 0)), "constant")
+    if data.shape[0] < 200:
+        offset = 200 - data.shape[0]
+        data = np.pad(data, ((0, offset), (0, 0)), "constant")
     return data
 
 def cut_data_front(data, out_length):
     if out_length is not None:
         if data.shape[0] > out_length:
-            data = data[:out_length, :]
+            max_offset = data.shape[0] - out_length
+            offset = 0
+            data = data[offset:(out_length + offset), :]
         else:
             offset = out_length - data.shape[0]
             data = np.pad(data, ((0, offset), (0, 0)), "constant")
+    if data.shape[0] < 200:
+        offset = 200 - data.shape[0]
+        data = np.pad(data, ((0, offset), (0, 0)), "constant")
     return data
+
+def shorter(feature, mean_size=2):
+    length, height = feature.shape
+    new_f = np.zeros((int(length / mean_size), height), dtype=np.float64)
+    for i in range(int(length / mean_size)):
+        new_f[i, :] = feature[i * mean_size:(i + 1) * mean_size, :].mean(axis=0)
+    return new_f
 
 def change_speed(data, l=0.7, r=1.5):  # change data.shape[0]
     new_len = int(data.shape[0] * np.random.uniform(l, r))
@@ -61,26 +79,26 @@ class CQT(Dataset):
 
     def __getitem__(self, index):
         transform_train = transforms.Compose([
-            lambda x: SpecAugment(x),  # SpecAugment augmentation once
-            lambda x: SpecAugment(x),  # SpecAugment augmentation x 2
+            lambda x: SpecAugment(x),  # SpecAugment
+            lambda x: SpecAugment(x),  # SpecAugment x 2
             lambda x: x.T,
             lambda x: change_speed(x, 0.7, 1.3),  # Random speed change
-            lambda x: torch.tensor(x.astype(np.float32)),  # Convert to tensor
-            lambda x: x / (torch.max(torch.abs(x)) + 1e-6),  # Normalize
-            lambda x: cut_data(x, self.out_length) if self.out_length else x,  # Ensure consistent length
+            lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
+            lambda x: cut_data(x, self.out_length),
+            lambda x: torch.tensor(x),  # Convert to tensor
             lambda x: x.permute(1, 0).unsqueeze(0),
         ])
         transform_test = transforms.Compose([
             lambda x: x.T,
-            lambda x: torch.tensor(x.astype(np.float32)),  # Convert to tensor
-            lambda x: x / (torch.max(torch.abs(x)) + 1e-6),  # Normalize
-            lambda x: cut_data_front(x, self.out_length) if self.out_length else x,  # Ensure consistent length
+            lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
+            lambda x: cut_data_front(x, self.out_length),
+            lambda x: torch.tensor(x),  # Convert to tensor
             lambda x: x.permute(1, 0).unsqueeze(0),
         ])
         filename = self.file_list[index].strip()
         set_id, version_id = filename.split('.')[0].split('_')
         set_id, version_id = int(set_id), int(version_id)
-        in_path = os.path.join(self.indir, filename + '.npy')
+        in_path = self.indir + filename + '.npy'
         data = np.load(in_path)  # from 12xN to Nx12
 
         if self.mode == 'train':
@@ -91,19 +109,6 @@ class CQT(Dataset):
 
     def __len__(self):
         return len(self.file_list)
-
-
-def custom_collate_fn(batch):
-    data = [item[0] for item in batch]
-    targets = [item[1] for item in batch]
-    data = torch.nn.utils.rnn.pad_sequence(data, batch_first=True)
-    targets = torch.tensor(targets)
-    return data, targets
-
-
-if __name__ == '__main__':
-    train_dataset = CQT('train', 394)
-    trainloader = DataLoader(train_dataset, batch_size=128, num_workers=12, shuffle=True, collate_fn=custom_collate_fn)
 
 
 
