@@ -20,7 +20,9 @@ def my_collate_fn(batch):
     lengths = [d.shape[2] for d in data]
     max_length = max(lengths)
     padded_data = [pad_tensor(d, max_length) for d in data]
-    return torch.stack(padded_data), torch.LongTensor(labels)
+    padded_data = torch.cat(padded_data, dim=0)
+    labels = torch.LongTensor(labels)
+    return padded_data, labels
 
 def cut_data(data, out_length):
     if out_length is not None:
