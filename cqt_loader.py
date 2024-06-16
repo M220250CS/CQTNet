@@ -10,13 +10,13 @@ def cut_data(data, out_length):
         if data.shape[0] > out_length:
             max_offset = data.shape[0] - out_length
             offset = np.random.randint(max_offset)
-            data = data[offset:(out_length+offset),:]
+            data = data[offset:(out_length+offset), :]
         else:
             offset = out_length - data.shape[0]
-            data = np.pad(data, ((0,offset),(0,0)), "constant")
+            data = np.pad(data, ((0, offset), (0, 0)), "constant")
     if data.shape[0] < out_length:
         offset = out_length - data.shape[0]
-        data = np.pad(data, ((0,offset),(0,0)), "constant")
+        data = np.pad(data, ((0, offset), (0, 0)), "constant")
     return data
 
 def cut_data_front(data, out_length):
@@ -26,45 +26,42 @@ def cut_data_front(data, out_length):
         else:
             offset = out_length - data.shape[0]
             data = np.pad(data, ((0, offset), (0, 0)), "constant")
-    if data.shape[0] < out_length:
-        offset = out_length - data.shape[0]
-        data = np.pad(data, ((0, offset), (0, 0)), "constant")
     return data
 
 def shorter(feature, mean_size=2):
     length, height  = feature.shape
-    new_f = np.zeros((int(length/mean_size),height),dtype=np.float64)
+    new_f = np.zeros((int(length/mean_size), height), dtype=np.float64)
     for i in range(int(length/mean_size)):
-        new_f[i,:] = feature[i*mean_size:(i+1)*mean_size,:].mean(axis=0)
+        new_f[i, :] = feature[i*mean_size:(i+1)*mean_size, :].mean(axis=0)
     return new_f
 
 def change_speed(data, l=0.7, r=1.5): # change data.shape[0]
-    new_len = int(data.shape[0]*np.random.uniform(l,r))
-    maxx = np.max(data)+1
-    data0 = PIL.Image.fromarray((data*255.0/maxx).astype(np.uint8))
+    new_len = int(data.shape[0] * np.random.uniform(l, r))
+    maxx = np.max(data) + 1
+    data0 = PIL.Image.fromarray((data * 255.0 / maxx).astype(np.uint8))
     transform = transforms.Compose([
-        transforms.Resize(size=(new_len,data.shape[1])), 
+        transforms.Resize(size=(new_len, data.shape[1])), 
     ])
     new_data = transform(data0)
-    return np.array(new_data)/255.0*maxx
+    return np.array(new_data) / 255.0 * maxx
 
 def SpecAugment(data):
     F = 24
     f = np.random.randint(F)
-    f0 = np.random.randint(84-f)
-    data[f0:f0+f,:]*=0
+    f0 = np.random.randint(84 - f)
+    data[f0:f0+f, :] *= 0
     return data
 
 class CQT(Dataset):
     def __init__(self, mode='train', out_length=None):
         self.indir = '/content/projectData/youtube_hpcp_npy/'
-        self.mode=mode
+        self.mode = mode
         if mode == 'train': 
-            filepath='data/SHS100K-TRAIN_6'
+            filepath = 'data/SHS100K-TRAIN_6'
         elif mode == 'val':
-            filepath='data/SHS100K-VAL'
+            filepath = 'data/SHS100K-VAL'
         elif mode == 'test': 
-            filepath='data/SHS100K-TEST'
+            filepath = 'data/SHS100K-TEST'
         elif mode == 'songs80': 
             self.indir = 'data/covers80_cqt_npy/'
             filepath = 'data/songs80_list.txt'
@@ -76,19 +73,19 @@ class CQT(Dataset):
         transform_train = transforms.Compose([
             lambda x: SpecAugment(x), # SpecAugment augmentation once
             lambda x: SpecAugment(x), # SpecAugment augmentation x 2
-            lambda x : x.T,
-            lambda x : change_speed(x, 0.7, 1.3), # Random speed change
-            lambda x : x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
-            lambda x : cut_data(x, self.out_length),
-            lambda x : torch.Tensor(x),
-            lambda x : x.permute(1, 0).unsqueeze(0),
+            lambda x: x.T,
+            lambda x: change_speed(x, 0.7, 1.3), # Random speed change
+            lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
+            lambda x: cut_data(x, self.out_length),
+            lambda x: torch.Tensor(x),
+            lambda x: x.permute(1, 0).unsqueeze(0),
         ])
         transform_test = transforms.Compose([
-            lambda x : x.T,
-            lambda x : x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
-            lambda x : cut_data_front(x, self.out_length),
-            lambda x : torch.Tensor(x),
-            lambda x : x.permute(1, 0).unsqueeze(0),
+            lambda x: x.T,
+            lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
+            lambda x: cut_data_front(x, self.out_length),
+            lambda x: torch.Tensor(x),
+            lambda x: x.permute(1, 0).unsqueeze(0),
         ])
         filename = self.file_list[index].strip()
         set_id, version_id = filename.split('.')[0].split('_')
