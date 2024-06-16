@@ -88,10 +88,10 @@ class CQT(Dataset):
     
     def __getitem__(self, index):
     transform_train = transforms.Compose([
-        lambda x: SpecAugment(x),
-        lambda x: SpecAugment(x),
+        lambda x: SpecAugment(x),  # SpecAugment augmentation once
+        lambda x: SpecAugment(x),  # SpecAugment augmentation x 2
         lambda x: x.T,
-        lambda x: change_speed(x, 0.7, 1.3),
+        lambda x: change_speed(x, 0.7, 1.3),  # Random speed change
         lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
     ])
     transform_test = transforms.Compose([
