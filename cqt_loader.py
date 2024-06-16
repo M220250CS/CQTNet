@@ -72,13 +72,15 @@ class CQT(Dataset):
             lambda x: SpecAugment(x), # SpecAugment augmentation x 2
             lambda x: x.T,
             lambda x: change_speed(x, 0.7, 1.3), # Random speed change
-            lambda x: torch.tensor(x.astype(np.float32)) / (np.max(np.abs(x)) + 1e-6), # Convert to tensor and normalize
+            lambda x: torch.tensor(x.astype(np.float32)), # Convert to tensor
+            lambda x: x / (torch.max(torch.abs(x)) + 1e-6), # Normalize
             lambda x: cut_data(x, self.out_length) if self.out_length else x, # Ensure consistent length
             lambda x: x.permute(1, 0).unsqueeze(0),
         ])
         transform_test = transforms.Compose([
             lambda x: x.T,
-            lambda x: torch.tensor(x.astype(np.float32)) / (np.max(np.abs(x)) + 1e-6), # Convert to tensor and normalize
+            lambda x: torch.tensor(x.astype(np.float32)), # Convert to tensor
+            lambda x: x / (torch.max(torch.abs(x)) + 1e-6), # Normalize
             lambda x: cut_data_front(x, self.out_length) if self.out_length else x, # Ensure consistent length
             lambda x: x.permute(1, 0).unsqueeze(0),
         ])
@@ -100,6 +102,7 @@ class CQT(Dataset):
 if __name__ == '__main__':
     train_dataset = CQT('train', 394)
     trainloader = DataLoader(train_dataset, batch_size=128, num_workers=12, shuffle=True)
+
 
 
 ########################
