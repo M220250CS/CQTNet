@@ -13,6 +13,7 @@ import torch.nn.functional as F
 import torch
 import torch.nn as nn
 from utility import *
+from models.CQTNet import CQTNet
 
 # multi_size train
 def multi_train(**kwargs):
