@@ -93,10 +93,17 @@ class CQT(Dataset):
         return len(self.file_list)
 
 
+def custom_collate_fn(batch):
+    data = [item[0] for item in batch]
+    targets = [item[1] for item in batch]
+    data = torch.nn.utils.rnn.pad_sequence(data, batch_first=True)
+    targets = torch.tensor(targets)
+    return data, targets
+
+
 if __name__ == '__main__':
     train_dataset = CQT('train', 394)
-    trainloader = DataLoader(train_dataset, batch_size=128, num_workers=12, shuffle=True)
-
+    trainloader = DataLoader(train_dataset, batch_size=128, num_workers=12, shuffle=True, collate_fn=custom_collate_fn)
 
 
 
