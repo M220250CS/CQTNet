@@ -5,6 +5,18 @@ import numpy as np
 from torch.utils.data import DataLoader, Dataset
 import PIL
 
+def pad_or_crop(data, target_length):
+    """
+    Pad or crop the input data to a fixed length.
+    """
+    length, width = data.shape
+    if length < target_length:
+        padding = target_length - length
+        data = np.pad(data, ((0, padding), (0, 0)), mode="constant")
+    elif length > target_length:
+        data = data[:target_length, :]
+    return data
+
 def pad_tensor(tensor, target_length):
     tensor_length = tensor.shape[2]
     padding_length = target_length - tensor_length
@@ -101,28 +113,23 @@ class CQT(Dataset):
             lambda x: x.T,
             lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
         ])
-
+    
         filename = self.file_list[index].strip()
         set_id, version_id = filename.split('.')[0].split('_')
         set_id, version_id = int(set_id), int(version_id)
         in_path = self.indir + filename + '.npy'
         data = np.load(in_path)
-
+    
         if self.mode == 'train':
             data = transform_train(data)
         else:
             data = transform_test(data)
-
-        # data = torch.Tensor(data).unsqueeze(0)  # Add an extra dimension for the batch size
-        # print(f"Input data shape: {data.shape}") ###### added to check the shape of data
-        # return data, int(set_id)
-
-        
+    
+        # Apply padding or cropping to the input data
+        data = pad_or_crop(data, self.out_length)
+    
         data = torch.Tensor(data).unsqueeze(0).unsqueeze(0)  # Add extra dimensions for batch_size and channels
         return data, int(set_id)
-    
-    def __len__(self):
-        return len(self.file_list)
 
 if __name__ == '__main__':
     train_dataset = CQT('train', 394)
