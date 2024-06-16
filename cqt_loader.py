@@ -131,6 +131,9 @@ class CQT(Dataset):
         data = torch.Tensor(data).unsqueeze(0).unsqueeze(0)  # Add extra dimensions for batch_size and channels
         return data, int(set_id)
 
+    def __len__(self):
+        return len(self.file_list)
+
 if __name__ == '__main__':
     train_dataset = CQT('train', 394)
     trainloader = DataLoader(train_dataset, batch_size=128, num_workers=12, shuffle=True, collate_fn=my_collate_fn)
