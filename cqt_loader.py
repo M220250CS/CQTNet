@@ -97,6 +97,8 @@ class CQT(Dataset):
         elif mode == 'songs80': 
             self.indir = 'data/covers80_cqt_npy/'
             filepath = 'data/songs80_list.txt'
+            if out_length is None:
+                out_length = 394  # Set a default value for out_length when mode is 'songs80'
         with open(filepath, 'r') as fp:
             self.file_list = [line.rstrip() for line in fp]
         self.out_length = out_length
