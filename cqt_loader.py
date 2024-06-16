@@ -89,31 +89,31 @@ class CQT(Dataset):
         self.out_length = out_length
     
     def __getitem__(self, index):
-        transform_train = transforms.Compose([
-            lambda x: SpecAugment(x),  # SpecAugment augmentation once
-            lambda x: SpecAugment(x),  # SpecAugment augmentation x 2
-            lambda x: x.T,
-            lambda x: change_speed(x, 0.7, 1.3),  # Random speed change
-            lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
-        ])
-        transform_test = transforms.Compose([
-            lambda x: x.T,
-            lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
-        ])
+    transform_train = transforms.Compose([
+        lambda x: SpecAugment(x),  # SpecAugment augmentation once
+        lambda x: SpecAugment(x),  # SpecAugment augmentation x 2
+        lambda x: x.T,
+        lambda x: change_speed(x, 0.7, 1.3),  # Random speed change
+        lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
+    ])
+    transform_test = transforms.Compose([
+        lambda x: x.T,
+        lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
+    ])
 
-        filename = self.file_list[index].strip()
-        set_id, version_id = filename.split('.')[0].split('_')
-        set_id, version_id = int(set_id), int(version_id)
-        in_path = self.indir + filename + '.npy'
-        data = np.load(in_path)
+    filename = self.file_list[index].strip()
+    set_id, version_id = filename.split('.')[0].split('_')
+    set_id, version_id = int(set_id), int(version_id)
+    in_path = self.indir + filename + '.npy'
+    data = np.load(in_path)
 
-        if self.mode == 'train':
-            data = transform_train(data)
-        else:
-            data = transform_test(data)
+    if self.mode == 'train':
+        data = transform_train(data)
+    else:
+        data = transform_test(data)
 
-        data = torch.Tensor(data).permute(1, 0).unsqueeze(0)
-        return data, int(set_id)
+    data = torch.Tensor(data).unsqueeze(0)  # Add an extra dimension for the batch size
+    return data, int(set_id)
     
     def __len__(self):
         return len(self.file_list)
