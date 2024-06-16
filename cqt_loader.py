@@ -6,30 +6,19 @@ from torch.utils.data import DataLoader, Dataset
 import PIL
 
 def cut_data(data, out_length):
-    if out_length is not None:
-        if data.shape[0] > out_length:
-            max_offset = data.shape[0] - out_length
-            offset = np.random.randint(max_offset)
-            data = data[offset:(out_length+offset), :]
-        else:
-            offset = out_length - data.shape[0]
-            data = np.pad(data, ((0, offset), (0, 0)), "constant")
     if data.shape[0] < out_length:
         offset = out_length - data.shape[0]
         data = np.pad(data, ((0, offset), (0, 0)), "constant")
-    return data
+    return data[:out_length, :]
 
 def cut_data_front(data, out_length):
-    if out_length is not None:
-        if data.shape[0] > out_length:
-            data = data[:out_length, :]
-        else:
-            offset = out_length - data.shape[0]
-            data = np.pad(data, ((0, offset), (0, 0)), "constant")
-    return data
+    if data.shape[0] < out_length:
+        offset = out_length - data.shape[0]
+        data = np.pad(data, ((0, offset), (0, 0)), "constant")
+    return data[:out_length, :]
 
 def shorter(feature, mean_size=2):
-    length, height  = feature.shape
+    length, height = feature.shape
     new_f = np.zeros((int(length/mean_size), height), dtype=np.float64)
     for i in range(int(length/mean_size)):
         new_f[i, :] = feature[i*mean_size:(i+1)*mean_size, :].mean(axis=0)
@@ -76,15 +65,15 @@ class CQT(Dataset):
             lambda x: x.T,
             lambda x: change_speed(x, 0.7, 1.3), # Random speed change
             lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
-            lambda x: cut_data(x, self.out_length),
             lambda x: torch.Tensor(x),
+            lambda x: cut_data(x, self.out_length), # Ensure consistent length
             lambda x: x.permute(1, 0).unsqueeze(0),
         ])
         transform_test = transforms.Compose([
             lambda x: x.T,
             lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
-            lambda x: cut_data_front(x, self.out_length),
             lambda x: torch.Tensor(x),
+            lambda x: cut_data_front(x, self.out_length), # Ensure consistent length
             lambda x: x.permute(1, 0).unsqueeze(0),
         ])
         filename = self.file_list[index].strip()
@@ -105,6 +94,7 @@ class CQT(Dataset):
 if __name__ == '__main__':
     train_dataset = CQT('train', 394)
     trainloader = DataLoader(train_dataset, batch_size=128, num_workers=12, shuffle=True)
+
 
 
 
