@@ -20,6 +20,7 @@ def my_collate_fn(batch):
     lengths = [d.shape[2] for d in data]
     max_length = max(lengths)
     padded_data = [pad_tensor(d, max_length) for d in data]
+    print(f"Input data shapes: {[d.shape for d in data]}") ###added to check the shape of data
     padded_data = torch.cat(padded_data, dim=0)
     labels = torch.LongTensor(labels)
     return padded_data, labels
@@ -113,6 +114,7 @@ class CQT(Dataset):
             data = transform_test(data)
 
         data = torch.Tensor(data).unsqueeze(0)  # Add an extra dimension for the batch size
+        print(f"Input data shape: {data.shape}") ###### added to check the shape of data
         return data, int(set_id)
     
     def __len__(self):
