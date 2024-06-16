@@ -135,8 +135,11 @@ class CQT(Dataset):
         return len(self.file_list)
 
 if __name__ == '__main__':
-    train_dataset = CQT('train', 394)
+    train_dataset = CQT('train', out_length=394)
+    val_dataset = CQT('songs80', out_length=394)  # Specify the desired out_length value
+
     trainloader = DataLoader(train_dataset, batch_size=128, num_workers=12, shuffle=True, collate_fn=my_collate_fn)
+    val_dataloader80 = DataLoader(val_dataset, batch_size=8, num_workers=4, shuffle=False, collate_fn=my_collate_fn)
 
 
 
