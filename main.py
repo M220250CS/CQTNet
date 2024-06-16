@@ -1,20 +1,16 @@
 import os
 import torch
-from cqt_loader import *
 from torch.utils.data import DataLoader
-import torchvision.transforms as transforms
-import models
 from config import opt
 from torchnet import meter
 from tqdm import tqdm
 import numpy as np
-import time
 import torch.nn.functional as F
 import torch
 import torch.nn as nn
 from utility import *
 from models.CQTNet import CQTNet
-from cqt_loader import custom_collate_fn  # Add this import
+from cqt_loader import CQT, custom_collate_fn
 
 # multi_size train
 def multi_train(**kwargs):
@@ -164,7 +160,6 @@ def test(**kwargs):
 if __name__ == '__main__':
     import fire
     fire.Fire()
-
 
 
 ###############
