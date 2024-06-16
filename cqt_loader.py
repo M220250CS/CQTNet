@@ -8,14 +8,12 @@ import bisect
 import torchvision
 import PIL
 
-
 def custom_collate_fn(batch):
     data, labels = zip(*batch)
     data = [torch.tensor(d, dtype=torch.float32) for d in data]
     data = torch.nn.utils.rnn.pad_sequence(data, batch_first=True)
     labels = torch.tensor(labels, dtype=torch.long)
     return data, labels
-
 
 def cut_data(data, out_length):
     if out_length is not None:
@@ -94,14 +92,14 @@ class CQT(Dataset):
             lambda x: change_speed(x, 0.7, 1.3),  # Random speed change
             lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
             lambda x: cut_data(x, self.out_length),
-            lambda x: torch.tensor(x),  # Convert to tensor
+            lambda x: torch.tensor(x).clone().detach().requires_grad_(True),  # Convert to tensor
             lambda x: x.permute(1, 0).unsqueeze(0),
         ])
         transform_test = transforms.Compose([
             lambda x: x.T,
             lambda x: x.astype(np.float32) / (np.max(np.abs(x)) + 1e-6),
             lambda x: cut_data_front(x, self.out_length),
-            lambda x: torch.tensor(x),  # Convert to tensor
+            lambda x: torch.tensor(x).clone().detach().requires_grad_(True),  # Convert to tensor
             lambda x: x.permute(1, 0).unsqueeze(0),
         ])
         filename = self.file_list[index].strip()
@@ -118,7 +116,6 @@ class CQT(Dataset):
 
     def __len__(self):
         return len(self.file_list)
-
 
 
 ########################
