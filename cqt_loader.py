@@ -113,8 +113,12 @@ class CQT(Dataset):
         else:
             data = transform_test(data)
 
-        data = torch.Tensor(data).unsqueeze(0)  # Add an extra dimension for the batch size
-        print(f"Input data shape: {data.shape}") ###### added to check the shape of data
+        # data = torch.Tensor(data).unsqueeze(0)  # Add an extra dimension for the batch size
+        # print(f"Input data shape: {data.shape}") ###### added to check the shape of data
+        # return data, int(set_id)
+
+        
+        data = torch.Tensor(data).unsqueeze(0).unsqueeze(0)  # Add extra dimensions for batch_size and channels
         return data, int(set_id)
     
     def __len__(self):
