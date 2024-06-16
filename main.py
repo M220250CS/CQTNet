@@ -18,9 +18,17 @@ from models.CQTNet import CQTNet
 def custom_collate_fn(batch):
     data = [item[0] for item in batch]
     target = [item[1] for item in batch]
-    data = torch.nn.utils.rnn.pad_sequence(data, batch_first=True)
+    max_length = max([d.shape[1] for d in data])
+    padded_data = []
+    for d in data:
+        pad_size = max_length - d.shape[1]
+        if pad_size > 0:
+            padding = torch.zeros(d.shape[0], pad_size, d.shape[2])
+            d = torch.cat((d, padding), dim=1)
+        padded_data.append(d)
+    padded_data = torch.stack(padded_data)
     target = torch.tensor(target)
-    return data, target
+    return padded_data, target
 
 # multi_size train
 def multi_train(**kwargs):
