@@ -10,8 +10,11 @@ from tqdm import tqdm
 import numpy as np
 import time
 import torch.nn.functional as F
+import torch
+import torch.nn as nn
 from utility import *
 from models.CQTNet import CQTNet
+from cqt_loader import custom_collate_fn  # Add this import
 
 # multi_size train
 def multi_train(**kwargs):
@@ -164,6 +167,7 @@ if __name__ == '__main__':
 
 
 
+###############
 
 
 
