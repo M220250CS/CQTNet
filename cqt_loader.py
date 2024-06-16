@@ -8,6 +8,15 @@ import bisect
 import torchvision
 import PIL
 
+
+def custom_collate_fn(batch):
+    data, labels = zip(*batch)
+    data = [torch.tensor(d, dtype=torch.float32) for d in data]
+    data = torch.nn.utils.rnn.pad_sequence(data, batch_first=True)
+    labels = torch.tensor(labels, dtype=torch.long)
+    return data, labels
+
+
 def cut_data(data, out_length):
     if out_length is not None:
         if data.shape[0] > out_length:
