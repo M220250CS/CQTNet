@@ -6,6 +6,12 @@ import numpy as np
 from torch.utils.data import DataLoader, Dataset
 import PIL
 
+def cut_data_front(data, out_length):
+    if out_length is not None:
+        if data.shape[0] > out_length:
+            data = data[:out_length, :]
+    return data
+
 def cut_data(data, out_length):
     if out_length is not None:
         if data.shape[0] > out_length:
