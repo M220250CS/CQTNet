@@ -63,9 +63,9 @@ class CQT(Dataset):
             filepath = 'data/SHS100K-VAL'
         elif mode == 'test': 
             filepath = 'data/SHS100K-TEST'
-        elif mode == 'songs80': 
-            self.indir = 'data/covers80_cqt_npy/'
-            filepath = 'data/songs80_list.txt'
+        # elif mode == 'songs80': 
+        #     self.indir = 'data/covers80_cqt_npy/'
+        #     filepath = 'data/songs80_list.txt'
         with open(filepath, 'r') as fp:
             self.file_list = [line.rstrip() for line in fp]
         self.out_length = out_length
