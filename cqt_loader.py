@@ -20,13 +20,15 @@ def cut_data(data, out_length):
         data = np.pad(data, ((0, offset), (0, 0)), "constant")
     return data
 
-def cut_data_front(data, out_length):
+def cut_data(data, out_length):
     if out_length is not None:
         if data.shape[0] > out_length:
-            data = data[:out_length, :]
+            start_idx = (data.shape[0] - out_length) // 2  # Center the crop
+            data = data[start_idx:start_idx + out_length, :]
         else:
-            offset = out_length - data.shape[0]
-            data = np.pad(data, ((0, offset), (0, 0)), "constant")
+            pad_left = (out_length - data.shape[0]) // 2
+            pad_right = out_length - data.shape[0] - pad_left
+            data = np.pad(data, ((pad_left, pad_right), (0, 0)), mode="constant")
     return data
 
 def shorter(feature, mean_size=2):
