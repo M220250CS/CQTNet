@@ -6,6 +6,29 @@ import numpy as np
 from torch.utils.data import DataLoader, Dataset
 import PIL
 
+def custom_collate_fn(batch):
+    # Find the maximum length in the batch
+    max_length = max(data.shape[1] for data, _ in batch)
+
+    # Pad or trim the tensors to the maximum length
+    padded_data = []
+    labels = []
+    for data, label in batch:
+        if data.shape[1] < max_length:
+            padding = max_length - data.shape[1]
+            padded_data.append(torch.nn.functional.pad(data, (0, 0, 0, padding), mode='constant', value=0))
+        elif data.shape[1] > max_length:
+            padded_data.append(data[:, :max_length])
+        else:
+            padded_data.append(data)
+        labels.append(label)
+
+    # Stack the padded tensors and labels
+    padded_data = torch.stack(padded_data, dim=0)
+    labels = torch.tensor(labels)
+
+    return padded_data, labels
+
 def cut_data_front(data, out_length):
     if out_length is not None:
         if data.shape[0] > out_length:
