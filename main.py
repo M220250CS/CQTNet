@@ -43,12 +43,12 @@ def multi_train(**kwargs):
     val_data = CQT('val', out_length=None)
     test_data = CQT('test', out_length=None)
     
-    train_dataloader0 = DataLoader(train_data0, opt.batch_size, shuffle=True, num_workers=opt.num_workers)
-    train_dataloader1 = DataLoader(train_data1, opt.batch_size, shuffle=True, num_workers=opt.num_workers)
-    train_dataloader2 = DataLoader(train_data2, opt.batch_size, shuffle=True, num_workers=opt.num_workers)
-    val_dataloader = DataLoader(val_data, 1, shuffle=False, num_workers=1)
-    test_dataloader = DataLoader(test_data, 1, shuffle=False, num_workers=1)
-    val_dataloader80 = DataLoader(val_data80, 1, shuffle=False, num_workers=1)
+    train_dataloader0 = DataLoader(train_data0, opt.batch_size, shuffle=True, num_workers=opt.num_workers, collate_fn=custom_collate_fn)
+    train_dataloader1 = DataLoader(train_data1, opt.batch_size, shuffle=True, num_workers=opt.num_workers, collate_fn=custom_collate_fn)
+    train_dataloader2 = DataLoader(train_data2, opt.batch_size, shuffle=True, num_workers=opt.num_workers, collate_fn=custom_collate_fn)
+    val_dataloader = DataLoader(val_data, 1, shuffle=False, num_workers=1, collate_fn=custom_collate_fn)
+    test_dataloader = DataLoader(test_data, 1, shuffle=False, num_workers=1, collate_fn=custom_collate_fn)
+    val_dataloader80 = DataLoader(val_data80, 1, shuffle=False, num_workers=1, collate_fn=custom_collate_fn)
     
     # step3: criterion and optimizer
     criterion = torch.nn.CrossEntropyLoss()
