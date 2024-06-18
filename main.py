@@ -17,8 +17,8 @@ from models.CQTNet import CQTNet
 def multi_train(**kwargs):
     parallel = True 
     opt.model = 'CQTNet'
-    opt.notes='CQTNet'
-    opt.batch_size = 32
+    opt.notes = 'CQTNet'
+    opt.batch_size = 16  # Reduced batch size to mitigate memory issues
     opt._parse(kwargs)
     
     # step1: configure model
@@ -155,6 +155,7 @@ def test(**kwargs):
 if __name__ == '__main__':
     import fire
     fire.Fire()
+
 
 
 
