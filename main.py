@@ -1,5 +1,6 @@
 ######---------------------------------------------------------------------------------------------------
 import os
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 import torch
 from cqt_loader import *
 from torch.utils.data import DataLoader
@@ -160,7 +161,6 @@ if __name__ == '__main__':
         'multi_train': multi_train,
         'test': test
     })
-
 
 
 
