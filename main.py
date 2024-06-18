@@ -16,6 +16,21 @@ import torch
 import torch.nn as nn
 from utility import *
 from models.CQTNet import CQTNet
+import GPUtil
+from tabulate import tabulate
+
+def print_gpu_utilization():
+    gpus = GPUtil.getGPUs()
+    list_gpus = []
+    for gpu in gpus:
+        gpu_id = gpu.id
+        gpu_load = f"{gpu.load*100:.2f}%"
+        gpu_free_memory = f"{gpu.memoryFree}MB"
+        gpu_used_memory = f"{gpu.memoryUsed}MB"
+        gpu_total_memory = f"{gpu.memoryTotal}MB"
+        gpu_temperature = f"{gpu.temperature} °C"
+        list_gpus.append((gpu_id, gpu_load, gpu_free_memory, gpu_used_memory, gpu_total_memory, gpu_temperature))
+    print(tabulate(list_gpus, headers=("id", "load", "free memory", "used memory", "total memory", "temperature")))
 
 # multi_size train
 def multi_train(**kwargs):
@@ -94,6 +109,7 @@ def multi_train(**kwargs):
 
         running_loss /= num 
         print(running_loss)
+        print_gpu_utilization()  # Print GPU utilization after each epoch
         if parallel:
             model.module.save(opt.notes)
         else:
@@ -170,8 +186,6 @@ if __name__ == '__main__':
         'multi_train': multi_train,
         'test': test
     })
-
-
 
 
 # ######---------------------------------------------------------------------------------------------------
