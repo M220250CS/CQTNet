@@ -19,6 +19,7 @@ from models.CQTNet import CQTNet
 
 # multi_size train
 def multi_train(**kwargs):
+    torch.cuda.empty_cache()
     parallel = True 
     opt.model = 'CQTNet'
     opt.notes='CQTNet'
