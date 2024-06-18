@@ -1,4 +1,5 @@
 import os
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 import torch
 from cqt_loader import *
 from torch.utils.data import DataLoader
@@ -13,12 +14,14 @@ import torch.nn.functional as F
 from utility import *
 from models.CQTNet import CQTNet
 
+torch.cuda.empty_cache()
+
 # multi_size train
 def multi_train(**kwargs):
     parallel = True 
     opt.model = 'CQTNet'
     opt.notes = 'CQTNet'
-    opt.batch_size = 8  # Further reduce batch size
+    opt.batch_size = 8  # Reduced batch size to mitigate memory issues
     opt._parse(kwargs)
     
     # step1: configure model
@@ -155,8 +158,6 @@ def test(**kwargs):
 if __name__ == '__main__':
     import fire
     fire.Fire()
-
-
 
 
 
