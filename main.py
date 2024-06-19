@@ -18,6 +18,7 @@ from utility import *
 from models.CQTNet import CQTNet
 import GPUtil
 from tabulate import tabulate
+from torch.cuda.amp import GradScaler, autocast
 
 def print_gpu_utilization():
     gpus = GPUtil.getGPUs()
@@ -77,6 +78,9 @@ def multi_train(**kwargs):
     # Gradient accumulation steps
     accumulation_steps = 4  # Number of batches to accumulate gradients
 
+    # AMP scaler
+    scaler = GradScaler()
+
     # train
     best_MAP = 0
     val_slow(model, val_dataloader80, -1)
@@ -96,12 +100,15 @@ def multi_train(**kwargs):
                 input = data.requires_grad_().to(opt.device)
                 target = label.to(opt.device)
 
-                score, _ = model(input)
-                loss = criterion(score, target)
-                loss.backward()
+                with autocast():
+                    score, _ = model(input)
+                    loss = criterion(score, target)
+
+                scaler.scale(loss).backward()
 
                 if (i + 1) % accumulation_steps == 0:
-                    optimizer.step()
+                    scaler.step(optimizer)
+                    scaler.update()
                     optimizer.zero_grad()
 
                 running_loss += loss.item()
