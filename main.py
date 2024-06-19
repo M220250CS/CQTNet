@@ -41,7 +41,7 @@ def multi_train(**kwargs):
     parallel = True 
     opt.model = 'CQTNet'
     opt.notes='CQTNet'
-    opt.batch_size=8  # Reduced batch size
+    opt.batch_size=4  # Further reduced batch size
     opt._parse(kwargs)
     
     # step1: configure model
@@ -113,6 +113,9 @@ def multi_train(**kwargs):
 
                 running_loss += loss.item()
                 num += target.shape[0]
+
+                # Clear CUDA cache frequently
+                torch.cuda.empty_cache()
 
         running_loss /= num 
         print(running_loss)
@@ -193,7 +196,6 @@ if __name__ == '__main__':
         'multi_train': multi_train,
         'test': test
     })
-
 
 
 # ######---------------------------------------------------------------------------------------------------
