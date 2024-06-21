@@ -83,7 +83,8 @@ def SpecAugment(data):
 
 class CQT(Dataset):
     def __init__(self, mode='train', out_length=None):
-        self.indir = '/content/projectData/youtube_hpcp_npy/'
+        # self.indir = '/content/projectData/youtube_hpcp_npy/'
+        self.indir = '/home/vaibhav/CQTNet-Project/youtube_hpcp_npy/'
         self.mode = mode
         if mode == 'train': 
             filepath = 'data/SHS100K-TRAIN_6'
