@@ -41,7 +41,7 @@ def multi_train(**kwargs):
     parallel = True 
     opt.model = 'CQTNet'
     opt.notes='CQTNet'
-    opt.batch_size=2  # Further reduced batch size
+    opt.batch_size=32  # Further reduced batch size
     opt._parse(kwargs)
     
     # step1: configure model
