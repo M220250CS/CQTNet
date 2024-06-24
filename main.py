@@ -54,7 +54,6 @@ def multi_train(**kwargs):
     
     # train
     best_MAP = 0
-    val_slow(model, val_dataloader, -1)
     for epoch in range(opt.max_epoch):
         running_loss = 0
         num = 0
