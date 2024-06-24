@@ -1,5 +1,3 @@
-## without Covers80 ##
-
 import os
 import torch
 from cqt_loader import *
@@ -51,33 +49,45 @@ def multi_train(**kwargs):
     
     # step3: criterion and optimizer
     criterion = torch.nn.CrossEntropyLoss()
-    lr = opt.lr
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=opt.weight_decay)
-    # some states
-    previous_loss = 1e10
-    log_path = opt.log_path
-    # meters
-    loss_meter = meter.AverageValueMeter()
-    confusion_matrix = meter.ConfusionMeter(opt.num_classes)
-    previous_MAP = 0
-    best_MAP = 0
+    optimizer = torch.optim.Adam(model.module.parameters() if parallel else model.parameters(), lr=opt.lr, weight_decay=opt.weight_decay)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=opt.lr_decay, patience=2, verbose=True, min_lr=5e-6)
     
     # train
+    best_MAP = 0
+    val_slow(model, val_dataloader, -1)
     for epoch in range(opt.max_epoch):
-        loss_meter.reset()
-        confusion_matrix.reset()
-        for ii, (data, label) in tqdm(enumerate(train_dataloader0)):
-            input = data.to(opt.device)
-            target = label.to(opt.device)
-            optimizer.zero_grad()
-            score = model(input)
-            loss = criterion(score, target)
-            loss.backward()
-            optimizer.step()
-            
-            loss_meter.add(loss.item())
-            confusion_matrix.add(score.detach(), target.detach())
-            
+        running_loss = 0
+        num = 0
+        for (data0, label0), (data1, label1), (data2, label2) in tqdm(zip(train_dataloader0, train_dataloader1, train_dataloader2)):
+            for flag in range(3):
+                if flag == 0:
+                    data, label = data0, label0
+                elif flag == 1:
+                    data, label = data1, label1
+                else:
+                    data, label = data2, label2
+                
+                input = data.requires_grad_().to(opt.device)
+                target = label.to(opt.device)
+
+                optimizer.zero_grad()
+                score, _ = model(input)
+                loss = criterion(score, target)
+                loss.backward()
+                optimizer.step()
+
+                running_loss += loss.item()
+                num += target.shape[0]
+        
+        running_loss /= num 
+        print(running_loss)
+        if parallel:
+            model.module.save(opt.notes)
+        else:
+            model.save(opt.notes)
+        
+        scheduler.step(running_loss) 
+        
         # validate
         MAP = 0
         MAP += val_slow(model, val_dataloader, epoch)
@@ -139,8 +149,6 @@ def test(**kwargs):
 if __name__ == '__main__':
     import fire
     fire.Fire()
-
-
 
 
 
